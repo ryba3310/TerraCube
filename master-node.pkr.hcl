@@ -1,3 +1,8 @@
+variable "project_id" {
+  type    = string
+  default = null
+}
+
 packer {
   required_plugins {
     googlecompute = {
@@ -8,7 +13,8 @@ packer {
 }
 
 source "googlecompute" "basic-example" {
-  project_id              = "project id"
+  project_id              = "${var.project_id}"
+  image_name              = "master-node-{{timestamp}}"
   source_image            = "debian-12-bookworm-v20250910"
   source_image_family     = "debian-12"
   ssh_username            = "packer"
