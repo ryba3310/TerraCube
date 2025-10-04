@@ -11,15 +11,15 @@ Run kuberneet cluster with minimm neccessary resources and proviion spot instanc
 # TODO
 
 - ✅ Some basic outline of purpose
-- ⚠️   Prepare master-node and worker-node images with Packer
-- ⚠️   Make Terraform script to provision long living nodes
+- ✅   Prepare node images with Packer
+- ✅   Make Terraform script to provision long living nodes
 - ⚠️   Make Terraform script to provision temporary nodes
-- ⚠️   Prepare SSH access for every node after provisioning
+- ✅   Prepare SSH access for every node after provisioning
 - ⚠️   Create Ansible playbook which takes care of node membership after being provisioned
 - ⚠️   Use cloud features to divide network into public and private
 - ⚠️   Gather KPIs to monitor cluster utilization
 - ⚠️   Create alert/threshold which provisions new nodes during heavy times
 - ⚠️   Use Kafka messege queuing ?
 - ⚠️   Prepare YAML configs for Kubernetes cluster
-- ⚠️   Prepare some interface to put any contaierized application ?
+- ⚠️   Prepare some interface to put any containerized application ?
 - ❌  reserved

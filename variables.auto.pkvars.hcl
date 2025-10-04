@@ -1,2 +1,2 @@
-project_id = "Your GCP project id"
+project_id = "august-apogee-473914-c5"
 

@@ -12,16 +12,16 @@ packer {
   }
 }
 
-source "googlecompute" "basic-example" {
+source "googlecompute" "defualt-node" {
   project_id              = "${var.project_id}"
-  image_name              = "master-node-{{timestamp}}"
+  image_name              = "default-node-{{timestamp}}"
   source_image            = "debian-12-bookworm-v20250910"
   source_image_family     = "debian-12"
   ssh_username            = "packer"
   zone                    = "europe-north2-a"
-  instance_name           = "packer-build-master"
+  instance_name           = "packer-build-node"
   disk_size               = 20
-  image_description       = "Base master node image"
+  image_description       = "Base defulat node image"
   image_storage_locations = ["eu"]
   image_labels = {
     name = "master-node"
@@ -35,7 +35,7 @@ source "googlecompute" "basic-example" {
 }
 
 build {
-  sources = ["sources.googlecompute.basic-example"]
+  sources = ["sources.googlecompute.defualt-node"]
 
   provisioner "shell" {
     scripts = [
