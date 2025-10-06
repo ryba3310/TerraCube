@@ -10,13 +10,18 @@ Run kuberneet cluster with minimm neccessary resources and proviion spot instanc
 
 # TODO
 
-- ✅ Some basic outline of purpose
+- ✅   Some basic outline of purpose
 - ✅   Prepare node images with Packer
 - ✅   Make Terraform script to provision long living nodes
 - ⚠️   Make Terraform script to provision temporary nodes
+- ⚠️   Make main script to run all the IaC code
 - ✅   Prepare SSH access for every node after provisioning
-- ⚠️   Create Ansible playbook which takes care of node membership after being provisioned
+- ✅   Create Ansible playbook which takes care of node membership after being provisioned
+- ⚠️   Create playbook managing Kuberentes
 - ⚠️   Use cloud features to divide network into public and private
+- ⚠️   Create Teleraf, InfluxDB and Grafana deployment
+- ⚠️   Create Teleraf DaemonSet to make it run on every node
+- ⚠️   Sort files into folders
 - ⚠️   Gather KPIs to monitor cluster utilization
 - ⚠️   Create alert/threshold which provisions new nodes during heavy times
 - ⚠️   Use Kafka messege queuing ?

@@ -14,7 +14,7 @@ sudo apt install -y docker.io containerd ca-certificates curl apt-transport-http
 
 # Set cgroups for CRI
 containerd config default | sudo tee /etc/containerd/config.toml
-sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
+sudo sed -i 's/ SystemdCgroup = false/ SystemdCgroup = true/' /etc/containerd/config.toml
 systemctl restart containerd
 
 # Install Kubernetes
