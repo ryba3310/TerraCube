@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana-local-storage
+spec:
+  claimRef:
+    name: grafana-local-pvc
+    namespace: monitoring
+  capacity:
+    storage: 2Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local:
+    path: /mnt/volumes/monitoring
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          # Hostname of the node that holds the storage
+          - worker-node-0
+          - worker-node-1
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-local-pvc
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  storageClassName: local-storage
+  volumeName: "grafana-local-storage"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+

@@ -21,3 +21,15 @@ echo "[workers]" >> "${ansible_ini_file}"
 for ip in ${worker_node[@]}; do
   echo "${ip} ansible_user=admin" >> "${ansible_ini_file}"
 done
+
+# Sleep to avoid connection errors
+sleep 20
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+ansible-playbook -i inventory.ini playbook.yml
+
+
+
+##### USE #####
+# /api/v2/authorizations path
+# to obtain InfluxDB token

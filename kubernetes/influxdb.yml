@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - env:
+         - name: DOCKER_INFLUXDB_INIT_USERNAME
+           valueFrom:
+              secretKeyRef:
+                name: influxdb-secret
+                key: user
+                optional: false
+         - name: DOCKER_INFLUXDB_INIT_PASSWORD
+           valueFrom:
+             secretKeyRef:
+               name: influxdb-secret
+               key: password
+               optional: false
+         - name: DOCKER_INFLUXDB_INIT_ORG
+           valueFrom:
+             secretKeyRef:
+               name: influxdb-secret
+               key: org
+               optional: false
+         - name: DOCKER_INFLUXDB_INIT_MODE
+           value: "setup"
+         - name: DOCKER_INFLUXDB_INIT_BUCKET
+           value: "telegraf"
+         - name: DOCKER_INFLUXDB_INIT_RETENTION
+           value: "90d"
+         - name: DOCKER_INFLUXDB_DB
+           value: "mydb"
+         - name: INFLUXD_LOG_LEVEL
+           value: "debug"
+        image: influxdb:2.7-alpine
+        name: influxdb3
+        ports:
+          - containerPort: 8086
+            name: http-influxport
+            protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 1Gi
+        volumeMounts:
+          # Mount two paths from the pvc
+          - mountPath: /etc/influxdb2
+            name: influxdb-pvc
+            subPath: "influxdb/config"
+          - mountPath: /var/lib/influxdb2
+            name: influxdb-pvc
+            subPath: "influxdb/data"
+      volumes:
+        - name: influxdb-pvc
+          persistentVolumeClaim:
+            claimName: influxdb-local-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  namespace: monitoring
+spec:
+  ports:
+    - name: influxdb
+      protocol: TCP
+      port: 8086
+      targetPort: http-influxport
+  selector:
+        app: influxdb
+  sessionAffinity: None
+  type: ClusterIP
