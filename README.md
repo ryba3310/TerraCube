@@ -20,11 +20,11 @@ Run kuberneet cluster with minimm neccessary resources and proviion spot instanc
 - ⚠️   Create playbook managing Kuberentes
 - ⚠️   Use cloud features to divide network into public and private
 - ✅   Create InfluxDB and Grafana deployment
-- ⚠️   Create Teleraf DaemonSet to make it run on every node
+- ✅   Create Teleraf DaemonSet to make it run on every node
 - ⚠️   Sort files into folders
 - ⚠️   Fix DNS resolution in Kubernetes
 - ⚠️   Fix long init time of Calico CNI (probably unavoidable)
-- ⚠️   Gather KPIs to monitor cluster utilization
+- ✅   Gather KPIs to monitor cluster utilization
 - ⚠️   Create service listening for Grafana's webhook, to provision temporal nodes
 - ⚠️   Create alert/threshold which provisions new nodes during heavy times
 - ⚠️   Use Kafka messege queuing ?
