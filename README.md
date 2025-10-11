@@ -25,6 +25,7 @@ Run kuberneet cluster with minimm neccessary resources and proviion spot instanc
 - ⚠️   Fix DNS resolution in Kubernetes
 - ⚠️   Fix long init time of Calico CNI (probably unavoidable)
 - ⚠️   Gather KPIs to monitor cluster utilization
+- ⚠️   Create service listening for Grafana's webhook, to provision temporal nodes
 - ⚠️   Create alert/threshold which provisions new nodes during heavy times
 - ⚠️   Use Kafka messege queuing ?
 - ✅   Prepare YAML configs for Grafna
