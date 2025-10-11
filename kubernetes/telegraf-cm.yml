@@ -1,0 +1,57 @@
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf
+  namespace: monitoring
+  labels:
+    app: telegraf
+data:
+  telegraf.conf: |+
+    [global_tags]
+      env = "$ENV"
+    [agent]
+      hostname = "$HOSTNAME"
+    [[outputs.influxdb_v2]]
+      urls = ["$MONITOR_HOST"]
+      token = "$INFLUX_TOKEN"
+      organization = "kubernetes"
+      bucket = "telegraf"
+    [[inputs.cpu]]
+      percpu = true
+      totalcpu = true
+      collect_cpu_time = false
+      report_active = false
+    [[inputs.disk]]
+      ignore_fs = ["tmpfs", "devtmpfs", "devfs"]
+    [[inputs.diskio]]
+    [[inputs.kernel]]
+    [[inputs.mem]]
+    [[inputs.processes]]
+    [[inputs.netstat]]
+    [[inputs.swap]]
+    [[inputs.system]]
+    [[inputs.kubernetes]]
+      url = "https://$HOSTIP:10250"
+      bearer_token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      insecure_skip_verify = true
+
+    [[inputs.kube_inventory]]
+      namespace = "" # Collect from all namespaces
+      bearer_token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+    [[aggregators.basicstats]]
+
+
+    ## The period on which to flush & clear the aggregator.
+    period = "30s"
+
+    ## If true, the original metric will be dropped by the
+    ## aggregator and will not get sent to the output plugins.
+    drop_original = false
+
+    ## BasicStats Arguments:
+
+    ## Configures which basic stats to push as fields
+    stats = ["count","min","max","mean","stdev","s2","sum"]

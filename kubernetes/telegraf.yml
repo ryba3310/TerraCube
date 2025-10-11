@@ -1,0 +1,89 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: telegraf
+  namespace: monitoring
+  labels:
+    app: telegraf
+spec:
+  selector:
+    matchLabels:
+      app: telegraf
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      serviceAccountName: telegraf
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: telegraf
+        image: telegraf:1.31
+        resources:
+          limits:
+            memory: 500Mi
+          requests:
+            cpu: 500m
+            memory: 250Mi
+        env:
+        # Pass the node hostname through
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        # Pass the node IP through
+        - name: HOSTIP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        # Mount some host directories so that telegraf can pull
+        # process info etc
+        - name: "HOST_PROC"
+          value: "/rootfs/proc"
+        - name: "HOST_SYS"
+          value: "/rootfs/sys"
+        - name: ENV
+          value: "lab"
+        - name: INFLUX_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: token-secret
+              key: token
+              optional: false
+        # What URL can we find InfluxDB at?
+        - name: MONITOR_HOST
+          value: "http://influxdb:8086"
+        # Which DB are we writing into?
+        - name: MONITOR_DATABASE
+          value: "telegraf"
+        volumeMounts:
+        - name: sys
+          mountPath: /rootfs/sys
+          readOnly: true
+        - name: proc
+          mountPath: /rootfs/proc
+          readOnly: true
+        - name: utmp
+          mountPath: /var/run/utmp
+          readOnly: true
+        - name: config
+          mountPath: /etc/telegraf
+      # Allow Telegraf time to flush when terminating
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: utmp
+        hostPath:
+          path: /var/run/utmp
+      - name: config
+        configMap:
+          name: telegraf

@@ -1,0 +1,29 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: influx-telegraf-viewer
+subjects:
+  - kind: ServiceAccount
+    name: telegraf
+    namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: influx-telegraf
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metric-scanner-kubelet-api-admin
+  labels:
+     app: telegraf
+subjects:
+- kind: ServiceAccount
+  name: telegraf
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io 
+  kind: ClusterRole
+  name: system:kubelet-api-admin
