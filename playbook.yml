@@ -4,10 +4,10 @@
   hosts: master
   gather_facts: True
   tasks:
-  #- name: Initilize kubernetes cluster
-    #shell: "sudo kubeadm init --upload-certs --control-plane-endpoint {{ ansible_facts['hostname'] }}:6443 --pod-network-cidr 192.168.0.0/16"
-    #become: True
-    #become_method: sudo
+  - name: Initilize kubernetes cluster
+    shell: "sudo kubeadm init --upload-certs --control-plane-endpoint {{ ansible_facts['hostname'] }}:6443 --pod-network-cidr 192.168.0.0/16"
+    become: True
+    become_method: sudo
 
   - name: Create directory for Kuberenetes config
     file:
@@ -26,9 +26,6 @@
       dest: "{{ ansible_env['HOME'] }}/.kube/config"
     become: True
     become_method: sudo
-  - name: Bebgg
-    debug:
-      var: "{{ ansible_facts['real_user_id'] }}"
 
   - name: Set ownership of config file
     file:
@@ -38,9 +35,42 @@
       group: "{{ ansible_facts['real_group_id'] }}"
     become: True
 
-  - name: Install pip
+  - name: Get terrafrom zip
+    ansible.builtin.get_url:
+      src: https://releases.hashicorp.com/terraform/1.13.3/terraform_1.13.3_linux_amd64.zip
+      dest: /home/admin/terraform.zip
+
+  - name: Unzip terraform and put it into path
+    ansible.builtin.unarchive:
+      src: /home/admin/terraform.zip
+      dest: /usr/local/bin/
+      mode: 755
+      include: terraform
+    become: True
+
+  - name: Copy variables for temporal terraform provision
+    copy:
+      remote_src: False
+      src: ./variables.tf
+      dest: /home/admin/terracube/
+
+  - name: Copy key to terraform cloud to let it provision
+    copy:
+      remote_src: False
+      src: ./google_key.json
+      dest: /home/admin/terracube/
+
+  - name: Copy variables for temporal terraform provision
+    copy:
+      remote_src: False
+      src: ./output_temp.tf
+      dest: /home/admin/terracube/output.tf
+
+  - name: Install pip and ansible
     apt:
-      name: python3-pip
+      pkg:
+      - python3-pip
+      - ansible
       state: present
     become: True
 
@@ -60,10 +90,11 @@
       name: "variable_host"
       join_cmd: "{{ join_command.stdout }}"
 
-  - name: Create a CNI Callico deployment # https://stackoverflow.com/a/79229320
+  - name: Install Tigera Operator
     kubernetes.core.k8s:
       state: present
-      src: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+      src: https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v3.31/manifests/tigera-operator.yaml
+
 
 - name: Configure worker nodes
   hosts: workers
@@ -73,8 +104,14 @@
   - name: Join the cluster
     shell: "sudo {{ hostvars['variable_host']['join_cmd'] }}"
 
+  - name: Create mount directory for PersistentVolumes
+    file:
+      path: /mnt/volumes/monitoring
+      state: directory
+    become: True
+
 - name: Configure lables on worker nodes
-  hosts: all
+  hosts: master,workerks
   gather_facts: True
   tasks:
   - name: Set labels
@@ -93,9 +130,122 @@
   hosts: master
   gather_facts: False
   tasks:
-  - name: Set labels
+  #- name: Create a CNI Callico deployment # https://stackoverflow.com/a/79229320
+    #kubernetes.core.k8s:
+      #state: present
+      #src: https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v3.31/manifests/calico.yaml
 
+  - name: Create a CNI Callico custom custom resources
+    kubernetes.core.k8s:
+      state: present
+      src: https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v3.31/manifests/custom-resources.yaml
 
+  - name: Pause to let nodes and CNI get ready
+    pause:
+      seconds: 90
+      prompt: Sleeping for 90 sec for nodes
+
+  - name: Create monitoring namespace
+    kubernetes.core.k8s:
+      state: present
+      definition: "{{ lookup('file', './kubernetes/monitoring-ns.yml') | from_yaml }}"
+
+  - name: Create grafana PersistentVolume and Claim
+    kubernetes.core.k8s:
+      state: present
+      definition: "{{ lookup('file', './kubernetes/grafana-pv.yml') | from_yaml_all }}"
+
+  - name: Create influxdb PersistentVolume and Claim
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/influxdb-pv.yml') | from_yaml_all }}"
+
+  - name: Sleep to let grafana claim the volume
+    pause:
+      seconds: 10
+      prompt: Sleeping for 10 sec for Grafana
+
+  - name: Create grafana deployment
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/grafana.yml') | from_yaml_all }}"
+
+  - name: Create influxdb secret
+    shell: "kubectl -n monitoring create secret generic influxdb-secret --from-literal=user=admin --from-literal=password='password' --from-literal=org='kubernetes'"
+
+  - name: Create influxdb deployment
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/influxdb.yml') | from_yaml_all }}"
+
+  - name: Sleep to let InfluxDB init
+    pause:
+      seconds: 30
+      prompt: Sleeping for 30 sec for InfluxDB
+
+  - name: Get influxdb pod name
+    shell: "kubectl -n monitoring get pods -lapp=influxdb --output jsonpath='{.items[*].metadata.name}'"
+    register: influxdb_pod
+
+  - name: Get token from InfluxDB
+    kubernetes.core.k8s_exec:
+      namespace: monitoring
+      pod: "{{ influxdb_pod.stdout }}"
+      command: "bash -c 'influx auth list --hide-headers | cut -f3'"
+    register: admin_token
+
+  - name: Save token to local fs for use in grafana
+    copy:
+      content: "{{ admin_token.stdout }}"
+      dest: ./influxdb_admin_token.txt
+    delegate_to: localhost
+
+  - name: Create secret token for Telegraf
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition:
+        apiVersion: v1
+        kind: Secret
+        type: Opaque
+        metadata:
+          name: "token-secret"
+          namespace: "monitoring"
+        data:
+          token: "{{ admin_token.stdout | trim | b64encode }}"
+
+  - name: Create telegraf Service Account
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/telegraf-sa.yml') | from_yaml }}"
+
+  - name: Create telegraf Cluster Role
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/telegraf-cluster-role.yml') | from_yaml_all }}"
+
+  - name: Create telegraf Role Binding
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/telegraf-role-binding.yml') | from_yaml_all }}"
+
+  - name: Create telegraf ConfigMap
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/telegraf-cm.yml') | from_yaml }}"
+
+  - name: Create telegraf DaemonSet
+    kubernetes.core.k8s:
+      state: present
+      namespace: monitoring
+      definition: "{{ lookup('file', './kubernetes/telegraf.yml') | from_yaml }}"
 
   ####### Kuberenetes maganemnt parts
   #

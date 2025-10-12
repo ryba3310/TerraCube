@@ -1,6 +1,12 @@
 #!/bin/bash
 
+yes | ssh-keygen -t ed25519 -f ./terracube.key -N '' -C 'admin@kubernetes'
+PUB_KEY=$(cat ./terracube.key.pub)
+ssh-add ./terracube.key
+# Changed pattern space separator to avoid picking random characters from key
+sed -E "s'\"ssh-ed.*\"'\"$PUB_KEY\"'" variables.tf
 
+exit 0
 
 terraform apply -auto-approve
 

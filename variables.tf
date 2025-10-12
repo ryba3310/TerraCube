@@ -21,6 +21,13 @@ variable "zone" {
   type        = string
   default     = "europe-north2-a"
 }
+
+variable "ip_cidr" {
+  description = "CIDR range of netowrk"
+  type        = string
+  default     = "10.2.0.0/16"
+}
+
 variable "ssh_pubkey" {
   description = "SSH key to access instance"
   type        = string

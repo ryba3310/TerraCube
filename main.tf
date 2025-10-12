@@ -6,14 +6,14 @@ provider "google" {
 
 resource "google_compute_network" "vpc_network" {
   project                 = var.project_id
-  name                    = "terrakube"
+  name                    = "terracube"
   mtu                     = 1460
   auto_create_subnetworks = false
 }
 
-resource "google_compute_subnetwork" "terrakube" {
+resource "google_compute_subnetwork" "terracube" {
   name          = "test-subnetwork"
-  ip_cidr_range = "10.2.0.0/16"
+  ip_cidr_range = var.ip_cidr
   region        = "europe-north2"
   network       = google_compute_network.vpc_network.id
   project       = var.project_id
@@ -67,7 +67,7 @@ resource "google_compute_address" "external-address" {
   depends_on = [ google_compute_firewall.default ]
 }
 
-data "google_compute_image" "master-node" {
+data "google_compute_image" "golden-image" {
   filter  = "name eq default-node.*"
   project = var.project_id
   most_recent = "true"
@@ -88,7 +88,7 @@ resource "google_compute_instance" "master-node" {
   }
 
   network_interface {
-    subnetwork = google_compute_subnetwork.terrakube.self_link
+    subnetwork = google_compute_subnetwork.terracube.self_link
     access_config {
       nat_ip = google_compute_address.external-address[0].address
     }
@@ -96,10 +96,10 @@ resource "google_compute_instance" "master-node" {
 
   boot_disk {
     initialize_params {
-      image = data.google_compute_image.master-node.self_link
+      image = data.google_compute_image.golden-image.self_link
     }
   }
-  depends_on = [ google_compute_firewall.default, google_compute_subnetwork.terrakube ]
+  depends_on = [ google_compute_firewall.default, google_compute_subnetwork.terracube ]
 }
 
 resource "google_compute_instance" "worker-node" {
@@ -118,7 +118,7 @@ resource "google_compute_instance" "worker-node" {
   }
 
   network_interface {
-    subnetwork = google_compute_subnetwork.terrakube.self_link
+    subnetwork = google_compute_subnetwork.terracube.self_link
     access_config {
       nat_ip = google_compute_address.external-address[count.index + 1].address
     }
@@ -126,8 +126,8 @@ resource "google_compute_instance" "worker-node" {
 
   boot_disk {
     initialize_params {
-      image = data.google_compute_image.master-node.self_link
+      image = data.google_compute_image.golden-image.self_link
     }
   }
-  depends_on = [ google_compute_firewall.default, google_compute_subnetwork.terrakube ]
+  depends_on = [ google_compute_firewall.default, google_compute_subnetwork.terracube ]
 }
