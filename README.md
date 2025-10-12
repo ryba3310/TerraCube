@@ -17,12 +17,12 @@ Run kuberneet cluster with minimm neccessary resources and proviion spot instanc
 - ✅   Make main script to run all the IaC code
 - ✅   Prepare SSH access for every node after provisioning
 - ✅   Create Ansible playbook which takes care of node membership after being provisioned
-- ⚠️   Create playbook managing Kuberentes
+- ✅   Create playbook managing Kuberentes
 - ⚠️   Use cloud features to divide network into public and private
 - ✅   Create InfluxDB and Grafana deployment
 - ✅   Create Teleraf DaemonSet to make it run on every node
 - ⚠️   Sort files into folders
-- ⚠️   Fix DNS resolution in Kubernetes
+- ✅   Fix DNS resolution in Kubernetes
 - ⚠️   Fix long init time of Calico CNI (probably unavoidable)
 - ✅   Gather KPIs to monitor cluster utilization
 - ⚠️   Create service listening for Grafana's webhook, to provision temporal nodes
@@ -30,7 +30,7 @@ Run kuberneet cluster with minimm neccessary resources and proviion spot instanc
 - ⚠️   Use Kafka messege queuing ?
 - ✅   Prepare YAML configs for Grafna
 - ✅   Prepare YAML configs for InfluxDB
-- ⚠️   Prepare YAML configs for Telegraf
+- ✅   Prepare YAML configs for Telegraf
 - ⚠️   Prepare YAML configs for Kubernetes cluster
 - ⚠️   Prepare some interface to put any containerized application ?
 - ❌  reserved
