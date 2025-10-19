@@ -2,9 +2,10 @@
 # Intro
 
 A project deploying and running Kubernetes cluster within cloud, using Terraform and Ansible as IaC to prepare environment and dynamically provision new worker nodes using spot instances for scaleability in case of temporal intense traffic.
+Provisiong of temporary nodes happens using Grafana monitoring and alarams. Once a set threshold is reached grafana sends a webhook POST request to a server listening on master-node, which starts provisiong script. Currently support only provisioning of predetermined number of worker nodes, which get destroed after a set period of time
+
 In cluster there is hosted a full monitoring stack, Grafana, Prometheus, Telegraf, InfluxDB and some Self-hosted utilities like PiHole or dashboard(Heimdall) and Nextcloud.
 
-Run kuberneet cluster with minimm neccessary resources and proviion spot instances which join the cluster in case of traffic spike.
 
 
 
