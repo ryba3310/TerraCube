@@ -51,20 +51,64 @@
   - name: Copy variables for temporal terraform provision
     copy:
       remote_src: False
-      src: ./variables.tf
-      dest: /home/admin/terracube/
+      src: ./temp_nodes/variables.tf
+      dest: /home/admin/temp_nodes/
 
   - name: Copy key to terraform cloud to let it provision
     copy:
       remote_src: False
       src: ./google_key.json
-      dest: /home/admin/terracube/
+      dest: /home/admin/temp_nodes/
+
+  - name: Copy terraform main script for temporal nodes
+    copy:
+      remote_src: False
+      src: ./temp_nodes/main.tf
+      dest: /home/admin/temp_nodes/output.tf
 
   - name: Copy variables for temporal terraform provision
     copy:
       remote_src: False
-      src: ./output_temp.tf
-      dest: /home/admin/terracube/output.tf
+      src: ./temp_nodes/output.tf
+      dest: /home/admin/temp_nodes/output.tf
+
+  - name: Copy playbook for temporal nodes
+    copy:
+      remote_src: False
+      src: ./temp_nodes/playbook_temp.yml
+      dest: /home/admin/temp_nodes/
+
+  - name: Copy listner for webhook
+    copy:
+      remote_src: False
+      src: ./temp_nodes/temp_listener.py
+      dest: /home/admin/temp_nodes/
+
+  - name: Copy key to acces temporal nodes
+    copy:
+      remote_src: False
+      src: ./terracube.key
+      dest: /home/admin/temp_nodes/
+
+
+  - name: Copy script to run provisiong and setup
+    copy:
+      remote_src: False
+      src: ./temp_nodes/temp_nodes.sh
+      dest: /home/admin/temp_nodes/
+
+  - name: Copy service file for listener
+    copy:
+      remote_src: False
+      src: ./temp_nodes/temp_nodes.service
+      dest: /etc/systemd/system/
+    become: True
+
+  - name: Start service
+    systemd:
+      name: temp_nodes.service
+      state: restarted
+      enabled: True
 
   - name: Install pip and ansible
     apt:
@@ -135,7 +179,7 @@
       #state: present
       #src: https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v3.31/manifests/calico.yaml
 
-  - name: Create a CNI Callico custom custom resources
+  - name: Create a CNI custom resources
     kubernetes.core.k8s:
       state: present
       src: https://raw.githubusercontent.com/projectcalico/calico/refs/heads/release-v3.31/manifests/custom-resources.yaml

@@ -1,0 +1,13 @@
+[Unit]
+Description=Listener for Grafana webhooks
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/admin/tmep_nodes/temp_listener.py
+User=admin
+Group=admin
+
+[Install]
+WantedBy=default.target
+
